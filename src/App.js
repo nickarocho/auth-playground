@@ -1,9 +1,8 @@
 /* src/App.js */
 import React, { useEffect, useState } from "react";
-import Amplify, { API, graphqlOperation } from "aws-amplify";
+import Amplify, { DataStore } from "aws-amplify";
+import { Todo } from "./models";
 import { withAuthenticator } from "@aws-amplify/ui-react";
-import { createTodo } from "./graphql/mutations";
-import { listTodos } from "./graphql/queries";
 import "@aws-amplify/ui-react/styles.css";
 
 import awsExports from "./aws-exports";
@@ -25,12 +24,16 @@ function App({ signOut, user }) {
 
   async function fetchTodos() {
     try {
-      const todoData = await API.graphql(graphqlOperation(listTodos));
-      const todos = todoData.data.listTodos.items;
+      const todos = await DataStore.query(Todo);
       setTodos(todos);
     } catch (err) {
-      console.log("error fetching todos");
+      console.error("error fetching todos", err);
     }
+  }
+
+  async function clear() {
+    await DataStore.clear();
+    fetchTodos();
   }
 
   async function addTodo() {
@@ -39,18 +42,22 @@ function App({ signOut, user }) {
       const todo = { ...formState };
       setTodos([...todos, todo]);
       setFormState(initialState);
-      await API.graphql(graphqlOperation(createTodo, { input: todo }));
+      await DataStore.save(new Todo(todo));
     } catch (err) {
-      console.log("error creating todo:", err);
+      console.error("error creating todo:", err);
     }
   }
 
   return (
     <div style={styles.container}>
-      <h1>Hello {user.username}</h1>
-      <button style={styles.button} onClick={signOut}>
-        Sign out
-      </button>
+      <div style={styles.row}>
+        <button style={styles.button} onClick={signOut}>
+          Sign out
+        </button>
+        <button style={styles.button} onClick={clear}>
+          Clear
+        </button>
+      </div>
       <br />
       <h2>Amplify Todos</h2>
       <input
@@ -81,11 +88,12 @@ function App({ signOut, user }) {
 const styles = {
   container: {
     width: 400,
-    margin: "0 auto",
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
-    padding: 20,
+    padding: "20vh 0",
+    margin: "0 auto",
+    minHeight: "100vh",
   },
   todo: { marginBottom: 15 },
   input: {
@@ -103,7 +111,9 @@ const styles = {
     outline: "none",
     fontSize: 18,
     padding: "12px 0px",
+    width: "100%",
   },
+  row: { display: "flex", justifyContent: "space-between" },
 };
 
 export default withAuthenticator(App);
