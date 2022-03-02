@@ -9,6 +9,11 @@
       "UnauthRoleName": "amplify-authplayground-dev-161457-unauthRole",
       "StackName": "amplify-authplayground-dev-161457",
       "StackId": "arn:aws:cloudformation:us-west-2:325800432239:stack/amplify-authplayground-dev-161457/cc660730-99bd-11ec-b81c-0a85e16ed737"
+    },
+    "categories": {
+      "auth": {
+        "authplaygrounde2036daa": {}
+      }
     }
   }
 }
