@@ -15,7 +15,18 @@ function App({ signOut, user }) {
   const [todos, setTodos] = useState([]);
 
   useEffect(() => {
+    const todoSubscription = DataStore.observe(Todo).subscribe(async () => {
+      try {
+        fetchTodos();
+      } catch (err) {
+        console.log("oh noooo");
+      }
+    });
     fetchTodos();
+
+    return () => {
+      todoSubscription.unsubscribe();
+    };
   }, []);
 
   function setInput(key, value) {
