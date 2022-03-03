@@ -19,9 +19,10 @@ function App({ signOut, user }) {
       try {
         fetchTodos();
       } catch (err) {
-        console.log("oh noooo");
+        console.error("todoSubscription error", err);
       }
     });
+
     fetchTodos();
 
     return () => {
@@ -43,15 +44,22 @@ function App({ signOut, user }) {
   }
 
   async function clearTodos() {
-    await DataStore.clear();
-    fetchTodos();
+    try {
+      await DataStore.clear();
+      fetchTodos();
+    } catch (err) {
+      console.error("error clearing DataStore", err);
+    }
   }
 
   async function deleteTodo(id) {
-    const todelete = await DataStore.query(Todo, id);
-    DataStore.delete(todelete);
-    console.log({ todelete });
-    fetchTodos();
+    try {
+      const todelete = await DataStore.query(Todo, id);
+      DataStore.delete(todelete);
+      fetchTodos();
+    } catch (err) {
+      console.error("error clearing DataStore", err);
+    }
   }
 
   async function addTodo() {
