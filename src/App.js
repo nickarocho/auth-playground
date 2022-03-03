@@ -31,8 +31,15 @@ function App({ signOut, user }) {
     }
   }
 
-  async function clear() {
+  async function clearTodos() {
     await DataStore.clear();
+    fetchTodos();
+  }
+
+  async function deleteTodo(id) {
+    const todelete = await DataStore.query(Todo, id);
+    DataStore.delete(todelete);
+    console.log({ todelete });
     fetchTodos();
   }
 
@@ -54,7 +61,7 @@ function App({ signOut, user }) {
         <button style={styles.button} onClick={signOut}>
           Sign out
         </button>
-        <button style={styles.button} onClick={clear}>
+        <button style={styles.button} onClick={clearTodos}>
           Clear
         </button>
       </div>
@@ -79,6 +86,14 @@ function App({ signOut, user }) {
         <div key={todo.id ? todo.id : index} style={styles.todo}>
           <p style={styles.todoName}>{todo.name}</p>
           <p style={styles.todoDescription}>{todo.description}</p>
+          <a
+            href="#delete"
+            data-todoid={todo.id}
+            onClick={() => deleteTodo(todo.id)}
+            style={styles.todoDelete}
+          >
+            Delete
+          </a>
         </div>
       ))}
     </div>
@@ -105,6 +120,14 @@ const styles = {
   },
   todoName: { fontSize: 20, fontWeight: "bold" },
   todoDescription: { marginBottom: 0 },
+  todoDelete: {
+    fontSize: ".7rem",
+    textDecoration: "none",
+    textTransform: "uppercase",
+    cursor: "pointer",
+    color: "red",
+    fontWeight: 700,
+  },
   button: {
     backgroundColor: "black",
     color: "white",
