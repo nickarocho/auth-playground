@@ -31,9 +31,8 @@ function App({ signOut, user }) {
 
   useEffect(() => {
     const todoSubscription = DataStore.observe(Todo).subscribe(async (msg) => {
-      console.log({ msg });
       try {
-        // await fetchTodos();
+        await fetchTodos();
       } catch (err) {
         console.error("todoSubscription error", err);
       }
@@ -52,10 +51,7 @@ function App({ signOut, user }) {
 
   async function fetchTodos() {
     try {
-      console.log("hi 1");
       const todos = await DataStore.query(Todo);
-      console.log("hi 2");
-
       setTodos(todos);
     } catch (err) {
       notify(`Hmm... something went wrong 🤔`, "error");
@@ -94,7 +90,7 @@ function App({ signOut, user }) {
         });
         break;
       case "loading":
-        // this
+        // TODO: this
         break;
       default:
       // intentionally blank
@@ -103,13 +99,17 @@ function App({ signOut, user }) {
 
   async function deleteTodo(id) {
     try {
+      if (!id) {
+        throw new Error("no ID passed to delete this specific model instance");
+      }
+
       const todelete = await DataStore.query(Todo, id);
-      DataStore.delete(todelete);
+      await DataStore.delete(todelete);
       fetchTodos();
       notify(`Done. Deleted Todo #${id}`, "success");
     } catch (err) {
       notify(`Hmm... something went wrong 🤔`, "error");
-      console.error("error clearing DataStore", err);
+      console.error(err);
     }
   }
 
