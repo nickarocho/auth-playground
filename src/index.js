@@ -6,16 +6,15 @@ import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 
 import Amplify from "aws-amplify";
-import { AmplifyProvider } from "@aws-amplify/ui-react";
 import awsExports from "./aws-exports";
+import { AmplifyProvider } from "@aws-amplify/ui-react";
 
 Amplify.configure(awsExports);
+Amplify.Logger.LOG_LEVEL = "DEBUG";
 
 ReactDOM.render(
   <React.StrictMode>
-    <AmplifyProvider>
-      <App />
-    </AmplifyProvider>
+    <App />
   </React.StrictMode>,
   document.getElementById("root")
 );

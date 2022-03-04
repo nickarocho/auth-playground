@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from "react";
-import Amplify, { DataStore } from "aws-amplify";
+import { DataStore } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 import { Todo } from "./models";
 import "@aws-amplify/ui-react/styles.css";
 
 // 🍻 https://react-hot-toast.com/docs/toast
 import toast, { Toaster } from "react-hot-toast";
-
-import awsExports from "./aws-exports";
-Amplify.configure(awsExports);
 
 const TOAST_SETTINGS = {
   duration: 3000,
@@ -54,9 +51,13 @@ function App({ signOut, user }) {
 
   async function fetchTodos() {
     try {
+      console.log("hi 1");
       const todos = await DataStore.query(Todo);
+      console.log("hi 2");
+
       setTodos(todos);
     } catch (err) {
+      notify(`Hmm... something went wrong 🤔`, "error");
       console.error("error fetching todos", err);
     }
   }
@@ -65,6 +66,7 @@ function App({ signOut, user }) {
     try {
       await DataStore.clear();
       fetchTodos();
+      notify(`Done. Cleared the local store (refresh to re-sync).`, "success");
     } catch (err) {
       console.error("error clearing DataStore", err);
     }
@@ -105,18 +107,27 @@ function App({ signOut, user }) {
       fetchTodos();
       notify(`Done. Deleted Todo #${id}`, "success");
     } catch (err) {
+      notify(`Hmm... something went wrong 🤔`, "error");
       console.error("error clearing DataStore", err);
     }
   }
 
   async function addTodo() {
     try {
-      if (!formState.name || !formState.description) return;
+      if (!formState.name || !formState.description) {
+        notify(
+          `Missing the name or description. Add those and try again.`,
+          "error"
+        );
+        return;
+      }
       const todo = { ...formState };
+      await DataStore.save(new Todo(todo));
+      notify(`Done.`, "success");
       setTodos([...todos, todo]);
       setFormState(initialState);
-      await DataStore.save(new Todo(todo));
     } catch (err) {
+      notify(`Hmm, something went wrong.`, "error");
       console.error("error creating todo:", err);
     }
   }
