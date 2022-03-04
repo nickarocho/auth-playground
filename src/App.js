@@ -222,7 +222,13 @@ function App({ signOut, user }) {
     <div style={styles.container}>
       {/* controls */}
       <div style={styles.row}>
-        <button style={styles.button} onClick={signOut}>
+        <button
+          style={styles.button}
+          onClick={() => {
+            DataStore.clear();
+            signOut();
+          }}
+        >
           Sign out
         </button>
         <button style={styles.button} onClick={clearTodos}>
