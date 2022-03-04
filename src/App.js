@@ -30,19 +30,20 @@ function App({ signOut, user }) {
   const [todos, setTodos] = useState([]);
 
   useEffect(() => {
-    const todoSubscription = DataStore.observe(Todo).subscribe(async () => {
-      try {
-        fetchTodos();
-      } catch (err) {
-        console.error("todoSubscription error", err);
-      }
-    });
+    // const todoSubscription = DataStore.observe(Todo).subscribe(async (msg) => {
+    //   console.log({ msg });
+    //   try {
+    //     // await fetchTodos();
+    //   } catch (err) {
+    //     console.error("todoSubscription error", err);
+    //   }
+    // });
 
     fetchTodos();
 
-    return () => {
-      todoSubscription.unsubscribe();
-    };
+    // return () => {
+    //   todoSubscription.unsubscribe();
+    // };
   }, []);
 
   function setInput(key, value) {

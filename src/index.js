@@ -14,7 +14,9 @@ Amplify.Logger.LOG_LEVEL = "DEBUG";
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <AmplifyProvider>
+      <App />
+    </AmplifyProvider>
   </React.StrictMode>,
   document.getElementById("root")
 );
