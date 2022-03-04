@@ -19,7 +19,6 @@ export const syncTodos = /* GraphQL */ `
         id
         name
         description
-        test
         _version
         _deleted
         _lastChangedAt
@@ -37,7 +36,6 @@ export const getTodo = /* GraphQL */ `
       id
       name
       description
-      test
       _version
       _deleted
       _lastChangedAt
@@ -57,7 +55,6 @@ export const listTodos = /* GraphQL */ `
         id
         name
         description
-        test
         _version
         _deleted
         _lastChangedAt
