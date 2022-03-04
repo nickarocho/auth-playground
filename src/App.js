@@ -28,6 +28,8 @@ const initialState = { name: "", description: "" };
 function App({ signOut, user }) {
   const [formState, setFormState] = useState(initialState);
   const [todos, setTodos] = useState([]);
+  const [currentlyEditing, setCurrentlyEditing] = useState([]);
+  const [editedDrafts, setEditedDrafts] = useState([]);
 
   useEffect(() => {
     const todoSubscription = DataStore.observe(Todo).subscribe(async (msg) => {
@@ -52,7 +54,7 @@ function App({ signOut, user }) {
   async function fetchTodos() {
     try {
       const todos = await DataStore.query(Todo);
-      setTodos(todos);
+      setTodos(todos.reverse());
     } catch (err) {
       notify(`Hmm... something went wrong 🤔`, "error");
       console.error("error fetching todos", err);
@@ -113,6 +115,87 @@ function App({ signOut, user }) {
     }
   }
 
+  async function editTodo(todo) {
+    try {
+      if (!todo.id) {
+        throw new Error("no ID passed to edit this specific model instance");
+      }
+
+      // toggle UI to edit this instance
+      setCurrentlyEditing([...currentlyEditing, todo.id]);
+      setEditedDrafts([
+        ...editedDrafts,
+        {
+          id: todo.id,
+          name: todo.name,
+          description: todo.description,
+        },
+      ]);
+    } catch (err) {
+      notify(`Hmm... something went wrong 🤔`, "error");
+      console.error(err);
+    }
+  }
+
+  function handleEditChange(todoId, key, value) {
+    const updatedDrafts = [...editedDrafts].map((draft) => {
+      if (draft.id === todoId) {
+        return {
+          ...draft,
+          [key]: value,
+        };
+      } else {
+        return draft;
+      }
+    });
+
+    setEditedDrafts([...updatedDrafts]);
+  }
+
+  function discardChanges(id) {
+    if (!id) {
+      notify(`Hmm... something went wrong 🤔`, "error");
+      throw new Error("no ID passed to discardChanges");
+    }
+
+    // remove ID from array of those being currently edited
+    const index = currentlyEditing.indexOf(id);
+    currentlyEditing.splice(index, 1);
+
+    // refresh state
+    setCurrentlyEditing([...currentlyEditing]);
+    // TODO: without this, the app could have a "soft-save" feature
+    setEditedDrafts(editedDrafts.filter((draft) => draft.id !== id));
+  }
+
+  async function saveChanges(id) {
+    try {
+      if (!id) {
+        notify(`Hmm... something went wrong 🤔`, "error");
+        throw new Error("no ID passed to saveChanges");
+      }
+
+      const original = await DataStore.query(Todo, id);
+      const modified = editedDrafts.find((draft) => draft.id === id);
+
+      // remove added ID property to avoid collision
+      delete modified.id;
+
+      await DataStore.save(
+        Todo.copyOf(original, (updated) => {
+          Object.assign(updated, modified);
+        })
+      );
+
+      fetchTodos();
+      notify(`The changes have been saved! 👍`, "success");
+      discardChanges(id);
+    } catch (err) {
+      notify(`Hmm... something went wrong saving your changes 🤔`, "error");
+      console.error(err);
+    }
+  }
+
   async function addTodo() {
     try {
       if (!formState.name || !formState.description) {
@@ -122,8 +205,10 @@ function App({ signOut, user }) {
         );
         return;
       }
+
       const todo = { ...formState };
       await DataStore.save(new Todo(todo));
+
       notify(`Done.`, "success");
       setTodos([...todos, todo]);
       setFormState(initialState);
@@ -166,20 +251,77 @@ function App({ signOut, user }) {
       </button>
 
       {/* todos */}
-      {todos.map((todo, idx) => (
-        <div key={todo.id ? todo.id : idx} style={styles.todo}>
-          <p style={styles.todoName}>{todo.name}</p>
-          <p style={styles.todoDescription}>{todo.description}</p>
-          <a
-            href="#delete"
-            data-todoid={todo.id}
-            onClick={() => deleteTodo(todo.id)}
-            style={styles.todoDelete}
-          >
-            Delete
-          </a>
-        </div>
-      ))}
+      {todos.map((todo, idx) => {
+        const isBeingEdited = currentlyEditing.includes(todo.id);
+        const editedDraft = editedDrafts.find((draft) => draft.id === todo.id);
+
+        return (
+          <div key={todo.id ? todo.id : idx} style={styles.todo}>
+            {isBeingEdited && editedDraft ? (
+              <>
+                <input
+                  onChange={(event) =>
+                    handleEditChange(todo.id, "name", event.target.value)
+                  }
+                  style={styles.todoNameEditing}
+                  value={editedDraft.name}
+                  placeholder="Name"
+                />
+                <input
+                  onChange={(event) =>
+                    handleEditChange(todo.id, "description", event.target.value)
+                  }
+                  style={styles.todoDescriptionEditing}
+                  value={editedDraft.description}
+                  placeholder="Description"
+                />
+              </>
+            ) : (
+              <>
+                <p style={styles.todoName}>{todo.name}</p>
+                <p style={styles.todoDescription}>{todo.description}</p>
+              </>
+            )}
+            <div style={styles.todo.controlsWrapper}>
+              {isBeingEdited ? (
+                <>
+                  <p
+                    data-todoid={todo.id}
+                    onClick={() => saveChanges(todo.id)}
+                    style={styles.todoEdit}
+                  >
+                    Save Changes
+                  </p>
+                  <p
+                    data-todoid={todo.id}
+                    onClick={() => discardChanges(todo.id)}
+                    style={styles.todoDelete}
+                  >
+                    Discard Changes
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p
+                    data-todoid={todo.id}
+                    onClick={() => editTodo(todo)}
+                    style={styles.todoEdit}
+                  >
+                    Edit
+                  </p>
+                  <p
+                    data-todoid={todo.id}
+                    onClick={() => deleteTodo(todo.id)}
+                    style={styles.todoDelete}
+                  >
+                    Delete
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })}
 
       {/* notifications */}
       <Toaster position="top-center" reverseOrder={false} gutter={8} />
@@ -197,7 +339,13 @@ const styles = {
     margin: "0 auto",
     minHeight: "100vh",
   },
-  todo: { marginBottom: 15 },
+  todo: {
+    marginBottom: 15,
+    controlsWrapper: {
+      display: "flex",
+      paddingTop: ".5rem",
+    },
+  },
   input: {
     border: "none",
     backgroundColor: "#ddd",
@@ -206,7 +354,10 @@ const styles = {
     fontSize: 18,
   },
   todoName: { fontSize: 20, fontWeight: "bold" },
+  // TODO: this CSS system is trash... need classes
+  todoNameEditing: { fontSize: 20, fontWeight: "bold", marginTop: "20px" },
   todoDescription: { marginBottom: 0 },
+  todoDescriptionEditing: { marginBottom: 0, marginTop: "16px" },
   todoDelete: {
     fontSize: ".7rem",
     textDecoration: "none",
@@ -214,6 +365,15 @@ const styles = {
     cursor: "pointer",
     color: "red",
     fontWeight: 700,
+  },
+  todoEdit: {
+    fontSize: ".7rem",
+    textDecoration: "none",
+    textTransform: "uppercase",
+    cursor: "pointer",
+    color: "#006faa",
+    fontWeight: 700,
+    paddingRight: "1rem",
   },
   button: {
     backgroundColor: "black",

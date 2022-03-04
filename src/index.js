@@ -5,12 +5,12 @@ import "@aws-amplify/ui-react/styles.css"; // default theme
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 
-import Amplify from "aws-amplify";
+import { Amplify } from "aws-amplify";
 import awsExports from "./aws-exports";
 import { AmplifyProvider } from "@aws-amplify/ui-react";
 
 Amplify.configure(awsExports);
-Amplify.Logger.LOG_LEVEL = "DEBUG";
+// Amplify.Logger.LOG_LEVEL = "DEBUG";
 
 ReactDOM.render(
   <React.StrictMode>
