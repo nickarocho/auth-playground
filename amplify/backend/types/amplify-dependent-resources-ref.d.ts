@@ -9,6 +9,8 @@ export type AmplifyDependentResourcesAttributes = {
         "authplaygrounde2036daa": {
             "IdentityPoolId": "string",
             "IdentityPoolName": "string",
+            "HostedUIDomain": "string",
+            "OAuthMetadata": "string",
             "UserPoolId": "string",
             "UserPoolArn": "string",
             "UserPoolName": "string",

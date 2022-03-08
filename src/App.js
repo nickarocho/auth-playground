@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { DataStore } from "aws-amplify";
+import { DataStore, I18n } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 import { Todo } from "./models";
 import "@aws-amplify/ui-react/styles.css";
@@ -25,7 +25,16 @@ const TOAST_SETTINGS = {
 };
 const initialState = { name: "", description: "" };
 
+I18n.putVocabulariesForLanguage("en", {
+  "Create Account": "Register",
+  "Create a new account": "New User",
+  "Confirm Password": "Type it again...",
+  Email: "What's your email?",
+  "Phone Number": "And a good phone number?",
+});
+
 function App({ signOut, user }) {
+  console.log({ user });
   const [formState, setFormState] = useState(initialState);
   const [todos, setTodos] = useState([]);
   const [currentlyEditing, setCurrentlyEditing] = useState([]);
@@ -220,6 +229,9 @@ function App({ signOut, user }) {
 
   return (
     <div style={styles.container}>
+      <div style={styles.user}>
+        Signed in as <strong>{user.username}</strong>
+      </div>
       {/* controls */}
       <div style={styles.row}>
         <button
@@ -395,6 +407,9 @@ const styles = {
       top: 0,
       right: 0,
     },
+  },
+  user: {
+    margin: "1rem 0",
   },
   row: { display: "flex", justifyContent: "space-between" },
 };
